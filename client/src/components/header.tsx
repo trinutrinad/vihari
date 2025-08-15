@@ -52,9 +52,9 @@ export default function Header({ onOpenCurrencyConverter }: HeaderProps) {
             
             {isAuthenticated ? (
               <div className="flex items-center space-x-3">
-                {user?.firstName && (
+                {user && (user as any).firstName && (
                   <span className="text-sm text-gray-600" data-testid="text-user-name">
-                    Hi, {user.firstName}
+                    Hi, {(user as any).firstName}
                   </span>
                 )}
                 <Button

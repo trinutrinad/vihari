@@ -119,14 +119,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/journey-plans', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const validatedData = insertJourneyPlanSchema.parse({
+      
+      // Convert string dates to Date objects if they exist
+      const processedBody = {
         ...req.body,
+        travelDate: req.body.travelDate ? new Date(req.body.travelDate) : undefined,
+        returnDate: req.body.returnDate ? new Date(req.body.returnDate) : undefined,
+      };
+      
+      const validatedData = insertJourneyPlanSchema.parse({
+        ...processedBody,
         userId,
       });
       const journeyPlan = await storage.createJourneyPlan(validatedData);
       res.status(201).json(journeyPlan);
     } catch (error) {
       if (error instanceof z.ZodError) {
+        console.error("Journey plan validation error:", error.errors);
         return res.status(400).json({ message: "Invalid journey plan data", errors: error.errors });
       }
       console.error("Error creating journey plan:", error);

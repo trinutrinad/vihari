@@ -174,6 +174,15 @@ export class MemStorage implements IStorage {
     const destination: Destination = {
       id: randomUUID(),
       ...destinationData,
+      description: destinationData.description || null,
+      imageUrl: destinationData.imageUrl || null,
+      rating: destinationData.rating || null,
+      startingPrice: destinationData.startingPrice || null,
+      state: destinationData.state || null,
+      country: destinationData.country || "India",
+      latitude: destinationData.latitude || null,
+      longitude: destinationData.longitude || null,
+      featured: destinationData.featured || false,
       createdAt: new Date(),
     };
     this.destinations.set(destination.id, destination);
@@ -201,7 +210,15 @@ export class MemStorage implements IStorage {
   async createJourneyPlan(journeyPlanData: InsertJourneyPlan): Promise<JourneyPlan> {
     const journeyPlan: JourneyPlan = {
       id: randomUUID(),
-      ...journeyPlanData,
+      userId: journeyPlanData.userId || null,
+      sourceLocation: journeyPlanData.sourceLocation,
+      destinationLocation: journeyPlanData.destinationLocation,
+      travelDate: journeyPlanData.travelDate || null,
+      returnDate: journeyPlanData.returnDate || null,
+      travelers: journeyPlanData.travelers || 1,
+      budget: journeyPlanData.budget || null,
+      preferences: journeyPlanData.preferences || null,
+      status: journeyPlanData.status || "draft",
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -238,6 +255,14 @@ export class MemStorage implements IStorage {
     const transport: TransportOption = {
       id: randomUUID(),
       ...transportData,
+      provider: transportData.provider || null,
+      departureTime: transportData.departureTime || null,
+      arrivalTime: transportData.arrivalTime || null,
+      duration: transportData.duration || null,
+      price: transportData.price || null,
+      currency: transportData.currency || "INR",
+      availability: transportData.availability ?? true,
+      bookingUrl: transportData.bookingUrl || null,
       createdAt: new Date(),
     };
     this.transportOptions.set(transport.id, transport);
@@ -259,7 +284,19 @@ export class MemStorage implements IStorage {
   async createAccommodation(accommodationData: InsertAccommodation): Promise<Accommodation> {
     const accommodation: Accommodation = {
       id: randomUUID(),
-      ...accommodationData,
+      name: accommodationData.name,
+      type: accommodationData.type || null,
+      location: accommodationData.location,
+      description: accommodationData.description || null,
+      rating: accommodationData.rating || null,
+      pricePerNight: accommodationData.pricePerNight || null,
+      currency: accommodationData.currency || "INR",
+      amenities: accommodationData.amenities || null,
+      imageUrls: accommodationData.imageUrls || null,
+      bookingUrl: accommodationData.bookingUrl || null,
+      latitude: accommodationData.latitude || null,
+      longitude: accommodationData.longitude || null,
+      availability: accommodationData.availability ?? true,
       createdAt: new Date(),
     };
     this.accommodations.set(accommodation.id, accommodation);
@@ -292,7 +329,16 @@ export class MemStorage implements IStorage {
   async createLocalService(serviceData: InsertLocalService): Promise<LocalService> {
     const service: LocalService = {
       id: randomUUID(),
-      ...serviceData,
+      name: serviceData.name,
+      type: serviceData.type,
+      location: serviceData.location,
+      address: serviceData.address || null,
+      phoneNumber: serviceData.phoneNumber || null,
+      rating: serviceData.rating || null,
+      latitude: serviceData.latitude || null,
+      longitude: serviceData.longitude || null,
+      openingHours: serviceData.openingHours || null,
+      serviceDetails: serviceData.serviceDetails || null,
       createdAt: new Date(),
     };
     this.localServices.set(service.id, service);
@@ -321,7 +367,18 @@ export class MemStorage implements IStorage {
   async createSightseeingSpot(spotData: InsertSightseeingSpot): Promise<SightseeingSpot> {
     const spot: SightseeingSpot = {
       id: randomUUID(),
-      ...spotData,
+      name: spotData.name,
+      description: spotData.description || null,
+      location: spotData.location,
+      category: spotData.category || null,
+      rating: spotData.rating || null,
+      entryFee: spotData.entryFee || null,
+      currency: spotData.currency || "INR",
+      imageUrls: spotData.imageUrls || null,
+      latitude: spotData.latitude || null,
+      longitude: spotData.longitude || null,
+      openingHours: spotData.openingHours || null,
+      bestTimeToVisit: spotData.bestTimeToVisit || null,
       createdAt: new Date(),
     };
     this.sightseeingSpots.set(spot.id, spot);
