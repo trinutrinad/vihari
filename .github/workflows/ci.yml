@@ -1,0 +1,22 @@
+name: CI
+on: [push, pull_request]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm ci
+      - run: npm test
+      - run: npm run build --if-present
+
+# Optional: add docker build & push steps below (requires registry secrets)
+# - name: Build and push Docker image
+#   uses: docker/build-push-action@v5
+#   with:
+#     push: true
+#     tags: ${{ secrets.IMAGE_NAME }}:${{ github.sha }}
+#     # or: tags: username/repo:latest
+#     # configure registry/login via secrets (DOCKERHUB_USERNAME/DOCKERHUB_TOKEN or REGISTRY, REGISTRY_USERNAME, REGISTRY_PASSWORD)

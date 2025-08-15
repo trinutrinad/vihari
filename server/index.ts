@@ -1,10 +1,28 @@
+import "dotenv/config"; // load .env at process start
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
-import { setupVite, serveStatic, log } from "./vite";
+import { setupVite, serveStatic } from "./vite";
+import mongoSanitize from "express-mongo-sanitize";
+import xss from "xss-clean";
+import { errorHandler } from "./middleware/error";
+import { logger } from "./logger";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
+import cors from "cors";
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+app.use(mongoSanitize());
+app.use(xss());
+app.use(helmet());
+app.use(cors({ origin: process.env.ALLOWED_ORIGINS?.split(",") || "*" }));
+
+const limiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 120,
+});
+app.use(limiter);
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -29,11 +47,17 @@ app.use((req, res, next) => {
         logLine = logLine.slice(0, 79) + "…";
       }
 
-      log(logLine);
+      logger.info(logLine);
     }
   });
 
   next();
+});
+
+app.get("/health", (req, res) => res.json({ status: "ok" }));
+app.get("/ready", async (req, res) => {
+  // optionally check DB pool with getPool()
+  res.json({ ready: true });
 });
 
 (async () => {
@@ -60,12 +84,14 @@ app.use((req, res, next) => {
   // Other ports are firewalled. Default to 5000 if not specified.
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
-  const port = parseInt(process.env.PORT || '5000', 10);
+  const port = Number(process.env.PORT) || 5000;
   server.listen({
     port,
     host: "0.0.0.0",
     reusePort: true,
   }, () => {
-    log(`serving on port ${port}`);
+    logger.info(`serving on port ${port}`);
   });
 })();
+
+app.use(errorHandler);

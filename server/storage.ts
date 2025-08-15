@@ -1,11 +1,4 @@
 import {
-  users,
-  destinations,
-  journeyPlans,
-  transportOptions,
-  accommodations,
-  localServices,
-  sightseeingSpots,
   type User,
   type UpsertUser,
   type Destination,
@@ -20,70 +13,146 @@ import {
   type InsertLocalService,
   type SightseeingSpot,
   type InsertSightseeingSpot,
-} from "@shared/schema";
+} from "../shared/schema";
+import sql from "mssql";
 import { randomUUID } from "crypto";
 
-// Interface for storage operations
+/*
+  Robust storage bootstrap:
+  - Does NOT start a connection at import-time.
+  - Exposes getPool() which attempts to connect on-demand and returns undefined on failure.
+  - Attaches pool 'error' handler after successful connect to avoid unhandled 'error' events.
+  - Exports in-memory storage instance for fallback.
+*/
+
+// ---- config parsing ----
+const serverEnv = process.env.DB_SERVER ?? "BTR\\ABSERVERPB";
+let server = serverEnv;
+let instanceName: string | undefined;
+let port: number | undefined;
+
+if (serverEnv.includes("\\")) {
+  const [h, inst] = serverEnv.split("\\", 2);
+  server = h;
+  instanceName = inst;
+} else if (serverEnv.includes(",")) {
+  const [h, p] = serverEnv.split(",", 2);
+  server = h;
+  const parsed = parseInt(p, 10);
+  if (!Number.isNaN(parsed)) port = parsed;
+}
+
+const config: sql.config = {
+  server,
+  database: process.env.DB_NAME ?? "vihariDB",
+  options: {
+    trustServerCertificate: true,
+    instanceName: instanceName,
+    encrypt: process.env.DB_ENCRYPT === "true",
+  },
+  connectionTimeout: 30000,
+  requestTimeout: 30000,
+};
+
+if (port) {
+  // some mssql versions accept port at root
+  (config as any).port = port;
+}
+
+if (process.env.DB_USER) {
+  (config as any).user = process.env.DB_USER;
+  (config as any).password = process.env.DB_PASSWORD ?? "";
+}
+
+// ---- pooled connection helper (lazy + safe) ----
+let _pool: sql.ConnectionPool | undefined;
+let _connecting: Promise<sql.ConnectionPool | undefined> | undefined;
+
+export async function getPool(): Promise<sql.ConnectionPool | undefined> {
+  if (_pool) return _pool;
+  if (_connecting) return _connecting;
+
+  _connecting = (async () => {
+    try {
+      const pool = await new sql.ConnectionPool(config).connect();
+      // attach handler to avoid unhandled 'error' events from the pool
+      pool.on("error", (err) => {
+        console.warn("SQL pool emitted error:", (err as any)?.message ?? err);
+      });
+      _pool = pool;
+      console.log(`✅ Connected to SQL Server: ${serverEnv}/${config.database}`);
+      return pool;
+    } catch (err) {
+      console.warn("⚠️  Database connection failed (falling back to in-memory storage):", (err as any)?.message ?? err);
+      return undefined;
+    } finally {
+      // allow future attempts after this attempt finishes
+      _connecting = undefined;
+    }
+  })();
+
+  return _connecting;
+}
+
+// ----------------- In-memory storage implementation -----------------
 export interface IStorage {
-  // User operations (mandatory for Replit Auth)
-  getUser(id: string): Promise<User | undefined>;
-  upsertUser(user: UpsertUser): Promise<User>;
-  
-  // Destination operations
-  getDestinations(): Promise<Destination[]>;
-  getFeaturedDestinations(): Promise<Destination[]>;
-  getDestination(id: string): Promise<Destination | undefined>;
-  createDestination(destination: InsertDestination): Promise<Destination>;
-  searchDestinations(query: string): Promise<Destination[]>;
-  
-  // Journey plan operations
-  getJourneyPlans(userId: string): Promise<JourneyPlan[]>;
-  getJourneyPlan(id: string): Promise<JourneyPlan | undefined>;
-  createJourneyPlan(journeyPlan: InsertJourneyPlan): Promise<JourneyPlan>;
-  updateJourneyPlan(id: string, updates: Partial<InsertJourneyPlan>): Promise<JourneyPlan | undefined>;
+  getUser(id: string): Promise<any | undefined>;
+  upsertUser(user: any): Promise<any>;
+  getDestinations(): Promise<any[]>;
+  getFeaturedDestinations(): Promise<any[]>;
+  getDestination(id: string): Promise<any | undefined>;
+  createDestination(destination: any): Promise<any>;
+  searchDestinations(query: string): Promise<any[]>;
+  getJourneyPlans(userId: string): Promise<any[]>;
+  getJourneyPlan(id: string): Promise<any | undefined>;
+  createJourneyPlan(journeyPlan: any): Promise<any>;
+  updateJourneyPlan(id: string, updates: Partial<any>): Promise<any | undefined>;
   deleteJourneyPlan(id: string): Promise<boolean>;
-  
-  // Transport operations
-  getTransportOptions(source: string, destination: string, date?: Date): Promise<TransportOption[]>;
-  createTransportOption(transport: InsertTransportOption): Promise<TransportOption>;
-  
-  // Accommodation operations
-  getAccommodations(location: string): Promise<Accommodation[]>;
-  getAccommodation(id: string): Promise<Accommodation | undefined>;
-  createAccommodation(accommodation: InsertAccommodation): Promise<Accommodation>;
-  
-  // Local services operations
-  getLocalServices(location: string, type?: string): Promise<LocalService[]>;
-  getNearbyServices(latitude: number, longitude: number, type?: string): Promise<LocalService[]>;
-  createLocalService(service: InsertLocalService): Promise<LocalService>;
-  
-  // Sightseeing operations
-  getSightseeingSpots(location: string): Promise<SightseeingSpot[]>;
-  getNearbySightseeing(latitude: number, longitude: number): Promise<SightseeingSpot[]>;
-  createSightseeingSpot(spot: InsertSightseeingSpot): Promise<SightseeingSpot>;
+  getTransportOptions(source: string, destination: string, date?: Date): Promise<any[]>;
+  createTransportOption(transport: any): Promise<any>;
+  getAccommodations(location: string): Promise<any[]>;
+  getAccommodation(id: string): Promise<any | undefined>;
+  createAccommodation(accommodation: any): Promise<any>;
+  getLocalServices(location: string, type?: string): Promise<any[]>;
+  getNearbyServices(latitude: number, longitude: number, type?: string): Promise<any[]>;
+  createLocalService(service: any): Promise<any>;
+  getSightseeingSpots(location: string): Promise<any[]>;
+  getNearbySightseeing(latitude: number, longitude: number): Promise<any[]>;
+  createSightseeingSpot(spot: any): Promise<any>;
+}
+
+function deg2rad(deg: number) { return deg * (Math.PI / 180); }
+
+function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number) {
+  const R = 6371;
+  const dLat = deg2rad(lat2 - lat1);
+  const dLon = deg2rad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+    Math.sin(dLon / 2) ** 2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
 }
 
 export class MemStorage implements IStorage {
-  private users: Map<string, User> = new Map();
-  private destinations: Map<string, Destination> = new Map();
-  private journeyPlans: Map<string, JourneyPlan> = new Map();
-  private transportOptions: Map<string, TransportOption> = new Map();
-  private accommodations: Map<string, Accommodation> = new Map();
-  private localServices: Map<string, LocalService> = new Map();
-  private sightseeingSpots: Map<string, SightseeingSpot> = new Map();
+  private users = new Map<string, any>();
+  private destinations = new Map<string, any>();
+  private journeyPlans = new Map<string, any>();
+  private transportOptions = new Map<string, any>();
+  private accommodations = new Map<string, any>();
+  private localServices = new Map<string, any>();
+  private sightseeingSpots = new Map<string, any>();
 
-  constructor() {
-    this.initializeData();
-  }
+  constructor() { this.initializeData(); }
 
   private initializeData() {
-    // Initialize with sample destinations
-    const sampleDestinations: Destination[] = [
+    const samples = [
       {
         id: randomUUID(),
         name: "Goa",
-        description: "Pristine beaches, vibrant nightlife, and Portuguese heritage",
-        imageUrl: "https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=800&h=600",
+        description: "Pristine beaches and beacheside fun",
+        imageUrl: null,
         rating: "4.8",
         startingPrice: 5999,
         state: "Goa",
@@ -96,8 +165,8 @@ export class MemStorage implements IStorage {
       {
         id: randomUUID(),
         name: "Kerala",
-        description: "God's Own Country with backwaters, hill stations, and spices",
-        imageUrl: "https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=800&h=600",
+        description: "Backwaters and hill stations",
+        imageUrl: null,
         rating: "4.9",
         startingPrice: 7500,
         state: "Kerala",
@@ -107,283 +176,79 @@ export class MemStorage implements IStorage {
         featured: true,
         createdAt: new Date(),
       },
-      {
-        id: randomUUID(),
-        name: "Rajasthan",
-        description: "Royal palaces, desert safaris, and rich cultural heritage",
-        imageUrl: "https://pixabay.com/get/ge8298c0e7cedd769cff120f10e60be8a58882904058f2d980788554332e696167950755f464845561a5d6a3c01eba31dff8fe46c1df95d915bd6586749680cdf_1280.jpg",
-        rating: "4.7",
-        startingPrice: 6800,
-        state: "Rajasthan",
-        country: "India",
-        latitude: "27.0238",
-        longitude: "74.2179",
-        featured: true,
-        createdAt: new Date(),
-      },
     ];
-
-    sampleDestinations.forEach(dest => this.destinations.set(dest.id, dest));
+    samples.forEach(s => this.destinations.set(s.id, s));
   }
 
-  // User operations
-  async getUser(id: string): Promise<User | undefined> {
-    return this.users.get(id);
+  async getUser(id: string) { return this.users.get(id); }
+  async upsertUser(user: any) {
+    const id = user.id ?? randomUUID();
+    const now = new Date();
+    const item = { id, ...user, createdAt: now, updatedAt: now };
+    this.users.set(id, item);
+    return item;
   }
 
-  async upsertUser(userData: UpsertUser): Promise<User> {
-    const existingUser = Array.from(this.users.values()).find(user => user.id === userData.id);
-    
-    if (existingUser) {
-      const updatedUser: User = {
-        ...existingUser,
-        ...userData,
-        updatedAt: new Date(),
-      };
-      this.users.set(existingUser.id, updatedUser);
-      return updatedUser;
-    } else {
-      const newUser: User = {
-        id: userData.id || randomUUID(),
-        email: userData.email || null,
-        firstName: userData.firstName || null,
-        lastName: userData.lastName || null,
-        profileImageUrl: userData.profileImageUrl || null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-      this.users.set(newUser.id, newUser);
-      return newUser;
-    }
+  async getDestinations() { return Array.from(this.destinations.values()); }
+  async getFeaturedDestinations() { return Array.from(this.destinations.values()).filter(d => d.featured); }
+  async getDestination(id: string) { return this.destinations.get(id); }
+  async createDestination(destination: any) {
+    const item = { id: randomUUID(), ...destination, createdAt: new Date() };
+    this.destinations.set(item.id, item);
+    return item;
   }
-
-  // Destination operations
-  async getDestinations(): Promise<Destination[]> {
-    return Array.from(this.destinations.values());
-  }
-
-  async getFeaturedDestinations(): Promise<Destination[]> {
-    return Array.from(this.destinations.values()).filter(dest => dest.featured);
-  }
-
-  async getDestination(id: string): Promise<Destination | undefined> {
-    return this.destinations.get(id);
-  }
-
-  async createDestination(destinationData: InsertDestination): Promise<Destination> {
-    const destination: Destination = {
-      id: randomUUID(),
-      ...destinationData,
-      description: destinationData.description || null,
-      imageUrl: destinationData.imageUrl || null,
-      rating: destinationData.rating || null,
-      startingPrice: destinationData.startingPrice || null,
-      state: destinationData.state || null,
-      country: destinationData.country || "India",
-      latitude: destinationData.latitude || null,
-      longitude: destinationData.longitude || null,
-      featured: destinationData.featured || false,
-      createdAt: new Date(),
-    };
-    this.destinations.set(destination.id, destination);
-    return destination;
-  }
-
-  async searchDestinations(query: string): Promise<Destination[]> {
-    const queryLower = query.toLowerCase();
-    return Array.from(this.destinations.values()).filter(dest =>
-      dest.name.toLowerCase().includes(queryLower) ||
-      dest.description?.toLowerCase().includes(queryLower) ||
-      dest.state?.toLowerCase().includes(queryLower)
+  async searchDestinations(q: string) {
+    const s = q.toLowerCase();
+    return Array.from(this.destinations.values()).filter(d =>
+      (d.name ?? "").toLowerCase().includes(s) ||
+      (d.description ?? "").toLowerCase().includes(s) ||
+      (d.state ?? "").toLowerCase().includes(s)
     );
   }
 
-  // Journey plan operations
-  async getJourneyPlans(userId: string): Promise<JourneyPlan[]> {
-    return Array.from(this.journeyPlans.values()).filter(plan => plan.userId === userId);
-  }
+  async getJourneyPlans(userId: string) { return Array.from(this.journeyPlans.values()).filter(p => p.userId === userId); }
+  async getJourneyPlan(id: string) { return this.journeyPlans.get(id); }
+  async createJourneyPlan(data: any) { const plan = { id: randomUUID(), ...data, createdAt: new Date(), updatedAt: new Date() }; this.journeyPlans.set(plan.id, plan); return plan; }
+  async updateJourneyPlan(id: string, updates: Partial<any>) { const existing = this.journeyPlans.get(id); if (!existing) return undefined; const updated = { ...existing, ...updates, updatedAt: new Date() }; this.journeyPlans.set(id, updated); return updated; }
+  async deleteJourneyPlan(id: string) { return this.journeyPlans.delete(id); }
 
-  async getJourneyPlan(id: string): Promise<JourneyPlan | undefined> {
-    return this.journeyPlans.get(id);
-  }
-
-  async createJourneyPlan(journeyPlanData: InsertJourneyPlan): Promise<JourneyPlan> {
-    const journeyPlan: JourneyPlan = {
-      id: randomUUID(),
-      userId: journeyPlanData.userId || null,
-      sourceLocation: journeyPlanData.sourceLocation,
-      destinationLocation: journeyPlanData.destinationLocation,
-      travelDate: journeyPlanData.travelDate || null,
-      returnDate: journeyPlanData.returnDate || null,
-      travelers: journeyPlanData.travelers || 1,
-      budget: journeyPlanData.budget || null,
-      preferences: journeyPlanData.preferences || null,
-      status: journeyPlanData.status || "draft",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    this.journeyPlans.set(journeyPlan.id, journeyPlan);
-    return journeyPlan;
-  }
-
-  async updateJourneyPlan(id: string, updates: Partial<InsertJourneyPlan>): Promise<JourneyPlan | undefined> {
-    const existing = this.journeyPlans.get(id);
-    if (!existing) return undefined;
-
-    const updated: JourneyPlan = {
-      ...existing,
-      ...updates,
-      updatedAt: new Date(),
-    };
-    this.journeyPlans.set(id, updated);
-    return updated;
-  }
-
-  async deleteJourneyPlan(id: string): Promise<boolean> {
-    return this.journeyPlans.delete(id);
-  }
-
-  // Transport operations
-  async getTransportOptions(source: string, destination: string, date?: Date): Promise<TransportOption[]> {
-    return Array.from(this.transportOptions.values()).filter(option =>
-      option.sourceLocation.toLowerCase().includes(source.toLowerCase()) &&
-      option.destinationLocation.toLowerCase().includes(destination.toLowerCase())
+  async getTransportOptions(source: string, destination: string) {
+    const src = source.toLowerCase(), dest = destination.toLowerCase();
+    return Array.from(this.transportOptions.values()).filter(o =>
+      (o.sourceLocation ?? "").toLowerCase().includes(src) &&
+      (o.destinationLocation ?? "").toLowerCase().includes(dest)
     );
   }
+  async createTransportOption(t: any) { const item = { id: randomUUID(), ...t, createdAt: new Date() }; this.transportOptions.set(item.id, item); return item; }
 
-  async createTransportOption(transportData: InsertTransportOption): Promise<TransportOption> {
-    const transport: TransportOption = {
-      id: randomUUID(),
-      ...transportData,
-      provider: transportData.provider || null,
-      departureTime: transportData.departureTime || null,
-      arrivalTime: transportData.arrivalTime || null,
-      duration: transportData.duration || null,
-      price: transportData.price || null,
-      currency: transportData.currency || "INR",
-      availability: transportData.availability ?? true,
-      bookingUrl: transportData.bookingUrl || null,
-      createdAt: new Date(),
-    };
-    this.transportOptions.set(transport.id, transport);
-    return transport;
-  }
+  async getAccommodations(location: string) { const l = location.toLowerCase(); return Array.from(this.accommodations.values()).filter(a => (a.location ?? "").toLowerCase().includes(l)); }
+  async getAccommodation(id: string) { return this.accommodations.get(id); }
+  async createAccommodation(a: any) { const item = { id: randomUUID(), ...a, createdAt: new Date() }; this.accommodations.set(item.id, item); return item; }
 
-  // Accommodation operations
-  async getAccommodations(location: string): Promise<Accommodation[]> {
-    const locationLower = location.toLowerCase();
-    return Array.from(this.accommodations.values()).filter(acc =>
-      acc.location.toLowerCase().includes(locationLower)
-    );
-  }
-
-  async getAccommodation(id: string): Promise<Accommodation | undefined> {
-    return this.accommodations.get(id);
-  }
-
-  async createAccommodation(accommodationData: InsertAccommodation): Promise<Accommodation> {
-    const accommodation: Accommodation = {
-      id: randomUUID(),
-      name: accommodationData.name,
-      type: accommodationData.type || null,
-      location: accommodationData.location,
-      description: accommodationData.description || null,
-      rating: accommodationData.rating || null,
-      pricePerNight: accommodationData.pricePerNight || null,
-      currency: accommodationData.currency || "INR",
-      amenities: accommodationData.amenities || null,
-      imageUrls: accommodationData.imageUrls || null,
-      bookingUrl: accommodationData.bookingUrl || null,
-      latitude: accommodationData.latitude || null,
-      longitude: accommodationData.longitude || null,
-      availability: accommodationData.availability ?? true,
-      createdAt: new Date(),
-    };
-    this.accommodations.set(accommodation.id, accommodation);
-    return accommodation;
-  }
-
-  // Local services operations
-  async getLocalServices(location: string, type?: string): Promise<LocalService[]> {
-    const locationLower = location.toLowerCase();
-    return Array.from(this.localServices.values()).filter(service => {
-      const locationMatch = service.location.toLowerCase().includes(locationLower);
-      const typeMatch = !type || service.type === type;
-      return locationMatch && typeMatch;
+  async getLocalServices(location: string, type?: string) { const l = location.toLowerCase(); return Array.from(this.localServices.values()).filter(s => (s.location ?? "").toLowerCase().includes(l) && (!type || s.type === type)); }
+  async getNearbyServices(latitude: number, longitude: number, type?: string) {
+    const radiusKm = 10;
+    return Array.from(this.localServices.values()).filter(s => {
+      if (type && s.type !== type) return false;
+      if (!s.latitude || !s.longitude) return false;
+      const lat = Number(s.latitude), lon = Number(s.longitude);
+      if (Number.isNaN(lat) || Number.isNaN(lon)) return false;
+      return haversineKm(latitude, longitude, lat, lon) <= radiusKm;
     });
   }
+  async createLocalService(s: any) { const item = { id: randomUUID(), ...s, createdAt: new Date() }; this.localServices.set(item.id, item); return item; }
 
-  async getNearbyServices(latitude: number, longitude: number, type?: string): Promise<LocalService[]> {
-    // Simple distance calculation - in production, use proper geospatial queries
-    return Array.from(this.localServices.values()).filter(service => {
-      if (type && service.type !== type) return false;
-      if (!service.latitude || !service.longitude) return false;
-      
-      const lat1 = parseFloat(service.latitude);
-      const lon1 = parseFloat(service.longitude);
-      const distance = Math.sqrt(Math.pow(lat1 - latitude, 2) + Math.pow(lon1 - longitude, 2));
-      return distance < 0.1; // Within ~10km radius
+  async getSightseeingSpots(location: string) { const l = location.toLowerCase(); return Array.from(this.sightseeingSpots.values()).filter(s => (s.location ?? "").toLowerCase().includes(l)); }
+  async getNearbySightseeing(latitude: number, longitude: number) {
+    const radiusKm = 20;
+    return Array.from(this.sightseeingSpots.values()).filter(s => {
+      if (!s.latitude || !s.longitude) return false;
+      const lat = Number(s.latitude), lon = Number(s.longitude);
+      if (Number.isNaN(lat) || Number.isNaN(lon)) return false;
+      return haversineKm(latitude, longitude, lat, lon) <= radiusKm;
     });
   }
-
-  async createLocalService(serviceData: InsertLocalService): Promise<LocalService> {
-    const service: LocalService = {
-      id: randomUUID(),
-      name: serviceData.name,
-      type: serviceData.type,
-      location: serviceData.location,
-      address: serviceData.address || null,
-      phoneNumber: serviceData.phoneNumber || null,
-      rating: serviceData.rating || null,
-      latitude: serviceData.latitude || null,
-      longitude: serviceData.longitude || null,
-      openingHours: serviceData.openingHours || null,
-      serviceDetails: serviceData.serviceDetails || null,
-      createdAt: new Date(),
-    };
-    this.localServices.set(service.id, service);
-    return service;
-  }
-
-  // Sightseeing operations
-  async getSightseeingSpots(location: string): Promise<SightseeingSpot[]> {
-    const locationLower = location.toLowerCase();
-    return Array.from(this.sightseeingSpots.values()).filter(spot =>
-      spot.location.toLowerCase().includes(locationLower)
-    );
-  }
-
-  async getNearbySightseeing(latitude: number, longitude: number): Promise<SightseeingSpot[]> {
-    return Array.from(this.sightseeingSpots.values()).filter(spot => {
-      if (!spot.latitude || !spot.longitude) return false;
-      
-      const lat1 = parseFloat(spot.latitude);
-      const lon1 = parseFloat(spot.longitude);
-      const distance = Math.sqrt(Math.pow(lat1 - latitude, 2) + Math.pow(lon1 - longitude, 2));
-      return distance < 0.2; // Within ~20km radius
-    });
-  }
-
-  async createSightseeingSpot(spotData: InsertSightseeingSpot): Promise<SightseeingSpot> {
-    const spot: SightseeingSpot = {
-      id: randomUUID(),
-      name: spotData.name,
-      description: spotData.description || null,
-      location: spotData.location,
-      category: spotData.category || null,
-      rating: spotData.rating || null,
-      entryFee: spotData.entryFee || null,
-      currency: spotData.currency || "INR",
-      imageUrls: spotData.imageUrls || null,
-      latitude: spotData.latitude || null,
-      longitude: spotData.longitude || null,
-      openingHours: spotData.openingHours || null,
-      bestTimeToVisit: spotData.bestTimeToVisit || null,
-      createdAt: new Date(),
-    };
-    this.sightseeingSpots.set(spot.id, spot);
-    return spot;
-  }
+  async createSightseeingSpot(s: any) { const item = { id: randomUUID(), ...s, createdAt: new Date() }; this.sightseeingSpots.set(item.id, item); return item; }
 }
 
 export const storage = new MemStorage();

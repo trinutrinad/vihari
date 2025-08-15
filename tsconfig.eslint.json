@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    "server/**/*",
+    "client/**/*",
+    "shared/**/*",
+    "tests/**/*",
+    "drizzle.config.ts",
+    "tailwind.config.ts",
+    "vite.config.ts",
+    "/*.ts",
+    "*.ts"
+  ]
+}

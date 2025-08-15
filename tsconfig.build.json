@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "CommonJS",
+    "target": "ES2020",
+    "moduleResolution": "node",
+    "outDir": "dist",
+    "rootDir": ".",
+    "declaration": false,
+    "sourceMap": false,
+    "removeComments": true,
+    "baseUrl": "."
+  },
+  "include": ["server/**/*", "shared/**/*"],
+  "exclude": ["server/vite.ts", "vite.config.ts", "client", "client/**/*"]
+}
