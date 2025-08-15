@@ -1,6 +1,6 @@
 # Overview
 
-YatraHub is a comprehensive travel planning application designed for exploring destinations across India. The application provides users with tools to discover destinations, plan journeys, access travel services (flights, hotels, transport), and manage travel itineraries. It features a modern React-based frontend with a Node.js/Express backend, utilizing PostgreSQL for data persistence and offering real-time travel planning capabilities.
+Vihari is a comprehensive travel planning application designed for exploring destinations across India. The application provides users with tools to discover destinations, plan journeys, access travel services (flights, hotels, transport), and manage travel itineraries. It features a modern React-based frontend with a Node.js/Express backend, utilizing PostgreSQL for data persistence and offering real-time travel planning capabilities.
 
 # User Preferences
 

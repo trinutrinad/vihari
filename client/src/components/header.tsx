@@ -18,7 +18,7 @@ export default function Header({ onOpenCurrencyConverter }: HeaderProps) {
         <div className="flex justify-between items-center h-16">
           <Link href="/" className="flex items-center space-x-2" data-testid="link-home">
             <Compass className="text-2xl text-brand-orange" />
-            <h1 className="text-xl font-bold text-gray-900">YatraHub</h1>
+            <h1 className="text-xl font-bold text-gray-900">Vihari</h1>
           </Link>
           
           <nav className="hidden md:flex items-center space-x-8">

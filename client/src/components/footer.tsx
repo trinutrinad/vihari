@@ -8,7 +8,7 @@ export default function Footer() {
           <div>
             <div className="flex items-center space-x-2 mb-4">
               <Compass className="text-2xl text-brand-orange" />
-              <h4 className="text-xl font-bold">YatraHub</h4>
+              <h4 className="text-xl font-bold">Vihari</h4>
             </div>
             <p className="text-gray-400 text-sm" data-testid="text-footer-description">
               Your complete travel companion for exploring incredible India with ease and convenience.
@@ -59,7 +59,7 @@ export default function Footer() {
         
         <div className="border-t border-gray-800 mt-8 pt-8 text-center text-sm text-gray-400">
           <p data-testid="text-copyright">
-            &copy; 2024 YatraHub. All rights reserved. | Privacy Policy | Terms of Service
+            &copy; 2024 Vihari. All rights reserved. | Privacy Policy | Terms of Service
           </p>
         </div>
       </div>
