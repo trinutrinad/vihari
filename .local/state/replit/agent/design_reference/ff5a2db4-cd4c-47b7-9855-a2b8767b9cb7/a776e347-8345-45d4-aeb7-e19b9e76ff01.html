@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TravelIndia - Your Complete Tourism Companion</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'inter': ['Inter', 'sans-serif'],
+                        'poppins': ['Poppins', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: {
+                            500: '#FF6B35',
+                            600: '#E85A2B',
+                            700: '#D14A21'
+                        },
+                        secondary: {
+                            500: '#1E3A8A',
+                            600: '#1E40AF',
+                            700: '#1D4ED8'
+                        },
+                        accent: {
+                            500: '#F59E0B',
+                            600: '#D97706'
+                        },
+                        success: {
+                            500: '#065F46',
+                            600: '#047857'
+                        }
+                    }
+                }
+            }
+        };
+    </script>
+</head>
+<body class="font-inter bg-gray-50">
+    <!-- @COMPONENT: NavigationHeader [user authentication, navigation links] -->
+    <nav class="bg-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <h1 class="text-2xl font-poppins font-bold text-secondary-500">
+                            <i class="fas fa-map-marked-alt text-primary-500 mr-2"></i>
+                            TravelIndia
+                        </h1>
+                    </div>
+                    <div class="hidden md:block ml-10">
+                        <div class="flex items-baseline space-x-8">
+                            <a href="#destinations" class="text-gray-700 hover:text-primary-500 px-3 py-2 text-sm font-medium transition-colors" data-event="click:navigateToDestinations">Destinations</a>
+                            <a href="#services" class="text-gray-700 hover:text-primary-500 px-3 py-2 text-sm font-medium transition-colors" data-event="click:navigateToServices">Services</a>
+                            <a href="#currency" class="text-gray-700 hover:text-primary-500 px-3 py-2 text-sm font-medium transition-colors" data-event="click:navigateToCurrency">Currency</a>
+                            <a href="#nearby" class="text-gray-700 hover:text-primary-500 px-3 py-2 text-sm font-medium transition-colors" data-event="click:navigateToNearby">Nearby</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <!-- @STATE: isAuthenticated:boolean = false -->
+                    <button class="hidden md:block text-gray-700 hover:text-primary-500 px-3 py-2 text-sm font-medium transition-colors" data-event="click:showLoginModal" data-mock="true">
+                        <i class="fas fa-sign-in-alt mr-1"></i>Login
+                    </button>
+                    <button class="bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors" data-event="click:showSignupModal" data-mock="true">
+                        Sign Up
+                    </button>
+                    <button class="md:hidden text-gray-700 hover:text-primary-500" data-event="click:toggleMobileMenu">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- Mobile menu -->
+        <div class="md:hidden hidden" data-bind="mobileMenuOpen">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white shadow-lg">
+                <a href="#destinations" class="text-gray-700 hover:text-primary-500 block px-3 py-2 text-base font-medium">Destinations</a>
+                <a href="#services" class="text-gray-700 hover:text-primary-500 block px-3 py-2 text-base font-medium">Services</a>
+                <a href="#currency" class="text-gray-700 hover:text-primary-500 block px-3 py-2 text-base font-medium">Currency</a>
+                <a href="#nearby" class="text-gray-700 hover:text-primary-500 block px-3 py-2 text-base font-medium">Nearby</a>
+            </div>
+        </div>
+    </nav>
+    <!-- @END_COMPONENT: NavigationHeader -->
+
+    <!-- @COMPONENT: HeroSection [destination search, featured destinations] -->
+    <section class="relative bg-gradient-to-r from-secondary-500 to-secondary-700 text-white py-20">
+        <!-- A vibrant panoramic view of the Taj Mahal at sunrise with clear blue skies -->
+        <div class="absolute inset-0 bg-black opacity-40"></div>
+        <div class="absolute inset-0" style="background-image: url('https://images.unsplash.com/photo-1564507592333-c60657eea523?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1920&h=1080'); background-size: cover; background-position: center;"></div>
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center">
+                <h1 class="text-4xl md:text-6xl font-poppins font-bold mb-6" data-mock="true">
+                    Discover Incredible India
+                </h1>
+                <p class="text-xl md:text-2xl mb-8 max-w-3xl mx-auto" data-mock="true">
+                    Your all-in-one companion for exploring India's rich heritage, booking transport, finding accommodation, and discovering local experiences.
+                </p>
+                
+                <!-- Search Bar -->
+                <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-2xl p-6">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Where do you want to go?</label>
+                            <div class="relative">
+                                <i class="fas fa-map-marker-alt absolute left-3 top-3 text-primary-500"></i>
+                                <input type="text" placeholder="Search destinations, cities, attractions..." 
+                                       class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-800"
+                                       data-bind="searchQuery" data-event="input:handleDestinationSearch" data-mock="true">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Travel Date</label>
+                            <input type="date" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-800"
+                                   data-bind="travelDate" data-mock="true">
+                        </div>
+                        <div>
+                            <button class="w-full bg-primary-500 hover:bg-primary-600 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center justify-center"
+                                    data-event="click:searchDestinations" data-implementation="Should trigger destination search with filters">
+                                <i class="fas fa-search mr-2"></i>
+                                Search
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- @END_COMPONENT: HeroSection -->
+
+    <!-- @COMPONENT: ServiceCategories [transport, accommodation, local services] -->
+    <section class="py-16 bg-white" id="services">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl md:text-4xl font-poppins font-bold text-gray-900 mb-4">All Your Travel Needs</h2>
+                <p class="text-xl text-gray-600 max-w-3xl mx-auto">Book transportation, find accommodation, discover local services, and manage your finances - all in one place.</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- @MAP: serviceCategories.map(category => ( -->
+                <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 hover:shadow-lg transition-all cursor-pointer group" data-event="click:openTransportBooking" data-mock="true">
+                    <div class="text-4xl text-secondary-500 mb-4 group-hover:scale-110 transition-transform">
+                        <i class="fas fa-plane"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-2">Transportation</h3>
+                    <p class="text-gray-600 mb-4">Flights, trains, buses, and local transport bookings</p>
+                    <div class="flex items-center text-primary-500 font-medium">
+                        <span>Book Now</span>
+                        <i class="fas fa-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>
+                    </div>
+                </div>
+
+                <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-6 hover:shadow-lg transition-all cursor-pointer group" data-event="click:openAccommodationSearch" data-mock="true">
+                    <div class="text-4xl text-success-500 mb-4 group-hover:scale-110 transition-transform">
+                        <i class="fas fa-bed"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-2">Accommodation</h3>
+                    <p class="text-gray-600 mb-4">Hotels, homestays, and guest houses</p>
+                    <div class="flex items-center text-primary-500 font-medium">
+                        <span>Find Stays</span>
+                        <i class="fas fa-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>
+                    </div>
+                </div>
+
+                <div class="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-6 hover:shadow-lg transition-all cursor-pointer group" data-event="click:openLocalServices" data-mock="true">
+                    <div class="text-4xl text-primary-500 mb-4 group-hover:scale-110 transition-transform">
+                        <i class="fas fa-utensils"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-2">Local Services</h3>
+                    <p class="text-gray-600 mb-4">Food delivery, local transport, and guides</p>
+                    <div class="flex items-center text-primary-500 font-medium">
+                        <span>Explore</span>
+                        <i class="fas fa-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>
+                    </div>
+                </div>
+
+                <div class="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl p-6 hover:shadow-lg transition-all cursor-pointer group" data-event="click:openFinancialServices" data-mock="true">
+                    <div class="text-4xl text-accent-500 mb-4 group-hover:scale-110 transition-transform">
+                        <i class="fas fa-exchange-alt"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-2">Financial Services</h3>
+                    <p class="text-gray-600 mb-4">Currency exchange, ATMs, and converters</p>
+                    <div class="flex items-center text-primary-500 font-medium">
+                        <span>View Services</span>
+                        <i class="fas fa-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>
+                    </div>
+                </div>
+                <!-- @END_MAP )) -->
+            </div>
+        </div>
+    </section>
+    <!-- @END_COMPONENT: ServiceCategories -->
+
+    <!-- @COMPONENT: FeaturedDestinations [popular tourist destinations] -->
+    <section class="py-16 bg-gray-50" id="destinations">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl md:text-4xl font-poppins font-bold text-gray-900 mb-4">Featured Destinations</h2>
+                <p class="text-xl text-gray-600 max-w-3xl mx-auto">Discover India's most stunning locations with detailed guides, reviews, and booking options.</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- @MAP: featuredDestinations.map(destination => ( -->
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow group" data-mock="true">
+                    <!-- A majestic view of the Taj Mahal with its white marble architecture against a clear sky -->
+                    <div class="relative h-64 overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1564507592333-c60657eea523?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=800&h=600" 
+                             alt="Taj Mahal, Agra" 
+                             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                        <div class="absolute top-4 right-4 bg-white rounded-full px-3 py-1 flex items-center">
+                            <i class="fas fa-star text-accent-500 mr-1"></i>
+                            <span class="text-sm font-medium" data-bind="destination.rating" data-mock="true">4.8</span>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-semibold text-gray-900 mb-2" data-bind="destination.name" data-mock="true">Taj Mahal, Agra</h3>
+                        <p class="text-gray-600 mb-4" data-bind="destination.description" data-mock="true">
+                            One of the Seven Wonders of the World, this magnificent marble mausoleum is a symbol of eternal love and architectural brilliance.
+                        </p>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center text-gray-500">
+                                <i class="fas fa-map-marker-alt mr-1"></i>
+                                <span class="text-sm" data-bind="destination.location" data-mock="true">Uttar Pradesh</span>
+                            </div>
+                            <button class="bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors" 
+                                    data-event="click:viewDestinationDetails" data-implementation="Should navigate to destination detail page">
+                                View Details
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow group" data-mock="true">
+                    <!-- A vibrant sunset view of backwaters in Kerala with traditional houseboats -->
+                    <div class="relative h-64 overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=800&h=600" 
+                             alt="Kerala Backwaters" 
+                             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                        <div class="absolute top-4 right-4 bg-white rounded-full px-3 py-1 flex items-center">
+                            <i class="fas fa-star text-accent-500 mr-1"></i>
+                            <span class="text-sm font-medium" data-mock="true">4.7</span>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-semibold text-gray-900 mb-2" data-mock="true">Kerala Backwaters</h3>
+                        <p class="text-gray-600 mb-4" data-mock="true">
+                            Serene waterways with lush greenery, traditional houseboats, and authentic South Indian culture. Perfect for a peaceful retreat.
+                        </p>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center text-gray-500">
+                                <i class="fas fa-map-marker-alt mr-1"></i>
+                                <span class="text-sm" data-mock="true">Kerala</span>
+                            </div>
+                            <button class="bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                                View Details
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow group" data-mock="true">
+                    <!-- A stunning view of Jaipur's Pink City architecture with traditional Rajasthani buildings -->
+                    <div class="relative h-64 overflow-hidden">
+                        <img src="https://pixabay.com/get/g139911a0dad9a0a19f329ef66e0d94124c6a631dc35d29a5e3db25bd44fde87ea7d9ced6d88af3bfd1432b7249cf6bca1dde7f2602069274f26385a2e98d3275_1280.jpg" 
+                             alt="Jaipur Pink City" 
+                             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                        <div class="absolute top-4 right-4 bg-white rounded-full px-3 py-1 flex items-center">
+                            <i class="fas fa-star text-accent-500 mr-1"></i>
+                            <span class="text-sm font-medium" data-mock="true">4.6</span>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-semibold text-gray-900 mb-2" data-mock="true">Jaipur - Pink City</h3>
+                        <p class="text-gray-600 mb-4" data-mock="true">
+                            Royal heritage, magnificent palaces, vibrant markets, and authentic Rajasthani cuisine. Experience the grandeur of royal India.
+                        </p>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center text-gray-500">
+                                <i class="fas fa-map-marker-alt mr-1"></i>
+                                <span class="text-sm" data-mock="true">Rajasthan</span>
+                            </div>
+                            <button class="bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                                View Details
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <!-- @END_MAP )) -->
+            </div>
+        </div>
+    </section>
+    <!-- @END_COMPONENT: FeaturedDestinations -->
+
+    <!-- @COMPONENT: CurrencyConverter [real-time currency conversion tool] -->
+    <section class="py-16 bg-white" id="currency">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl md:text-4xl font-poppins font-bold text-gray-900 mb-4">Currency Converter</h2>
+                <p class="text-xl text-gray-600">Get real-time exchange rates and convert currencies instantly.</p>
+            </div>
+            
+            <div class="bg-gradient-to-br from-accent-50 to-orange-100 rounded-xl p-8 shadow-lg">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">From</label>
+                        <div class="space-y-4">
+                            <select class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent" 
+                                    data-bind="fromCurrency" data-event="change:updateConversion" data-mock="true">
+                                <option value="USD" data-mock="true">USD - US Dollar</option>
+                                <option value="EUR" data-mock="true">EUR - Euro</option>
+                                <option value="GBP" data-mock="true">GBP - British Pound</option>
+                                <option value="JPY" data-mock="true">JPY - Japanese Yen</option>
+                                <option value="AUD" data-mock="true">AUD - Australian Dollar</option>
+                            </select>
+                            <input type="number" placeholder="Enter amount" 
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                                   data-bind="fromAmount" data-event="input:updateConversion" data-mock="true" value="100">
+                        </div>
+                    </div>
+                    
+                    <div class="text-center">
+                        <button class="bg-primary-500 hover:bg-primary-600 text-white p-3 rounded-full transition-colors" 
+                                data-event="click:swapCurrencies" data-implementation="Should swap from and to currencies">
+                            <i class="fas fa-exchange-alt text-xl"></i>
+                        </button>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">To</label>
+                        <div class="space-y-4">
+                            <select class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent" 
+                                    data-bind="toCurrency" data-event="change:updateConversion" data-mock="true">
+                                <option value="INR" selected data-mock="true">INR - Indian Rupee</option>
+                                <option value="USD" data-mock="true">USD - US Dollar</option>
+                                <option value="EUR" data-mock="true">EUR - Euro</option>
+                                <option value="GBP" data-mock="true">GBP - British Pound</option>
+                                <option value="JPY" data-mock="true">JPY - Japanese Yen</option>
+                            </select>
+                            <div class="bg-white px-4 py-3 border border-gray-300 rounded-lg">
+                                <span class="text-2xl font-semibold text-primary-500" data-bind="convertedAmount" data-mock="true">₹ 8,250.00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-6 p-4 bg-white rounded-lg">
+                    <div class="flex items-center justify-between text-sm text-gray-600">
+                        <span>Exchange Rate: <span class="font-medium text-gray-900" data-bind="exchangeRate" data-mock="true">1 USD = 82.50 INR</span></span>
+                        <span>Last updated: <span data-bind="lastUpdated" data-mock="true">2 minutes ago</span></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- @END_COMPONENT: CurrencyConverter -->
+
+    <!-- @COMPONENT: NearbyServices [ATMs, currency exchange, sightseeing] -->
+    <section class="py-16 bg-gray-50" id="nearby">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl md:text-4xl font-poppins font-bold text-gray-900 mb-4">Nearby Services</h2>
+                <p class="text-xl text-gray-600">Find essential services and attractions near your location.</p>
+            </div>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- ATMs Section -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <div class="flex items-center mb-6">
+                        <div class="bg-green-100 p-3 rounded-lg mr-4">
+                            <i class="fas fa-credit-card text-success-500 text-xl"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-900">Nearby ATMs</h3>
+                    </div>
+                    
+                    <!-- @MAP: nearbyATMs.map(atm => ( -->
+                    <div class="space-y-4">
+                        <div class="border-l-4 border-success-500 pl-4 py-2" data-mock="true">
+                            <h4 class="font-medium text-gray-900" data-bind="atm.name" data-mock="true">SBI ATM - Connaught Place</h4>
+                            <p class="text-sm text-gray-600" data-bind="atm.address" data-mock="true">Block A, Connaught Place, New Delhi</p>
+                            <div class="flex items-center mt-2 text-sm">
+                                <i class="fas fa-walking text-primary-500 mr-1"></i>
+                                <span class="text-gray-500" data-bind="atm.distance" data-mock="true">0.2 km away</span>
+                            </div>
+                        </div>
+                        
+                        <div class="border-l-4 border-success-500 pl-4 py-2" data-mock="true">
+                            <h4 class="font-medium text-gray-900" data-mock="true">HDFC Bank ATM</h4>
+                            <p class="text-sm text-gray-600" data-mock="true">Janpath Road, New Delhi</p>
+                            <div class="flex items-center mt-2 text-sm">
+                                <i class="fas fa-walking text-primary-500 mr-1"></i>
+                                <span class="text-gray-500" data-mock="true">0.4 km away</span>
+                            </div>
+                        </div>
+                        
+                        <div class="border-l-4 border-success-500 pl-4 py-2" data-mock="true">
+                            <h4 class="font-medium text-gray-900" data-mock="true">ICICI Bank ATM</h4>
+                            <p class="text-sm text-gray-600" data-mock="true">Khan Market, New Delhi</p>
+                            <div class="flex items-center mt-2 text-sm">
+                                <i class="fas fa-car text-primary-500 mr-1"></i>
+                                <span class="text-gray-500" data-mock="true">1.2 km away</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- @END_MAP )) -->
+                    
+                    <button class="w-full mt-4 bg-success-500 hover:bg-success-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors" 
+                            data-event="click:showAllATMs" data-implementation="Should show map with all nearby ATMs">
+                        View All ATMs
+                    </button>
+                </div>
+
+                <!-- Currency Exchange Section -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <div class="flex items-center mb-6">
+                        <div class="bg-yellow-100 p-3 rounded-lg mr-4">
+                            <i class="fas fa-coins text-accent-500 text-xl"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-900">Currency Exchange</h3>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div class="border-l-4 border-accent-500 pl-4 py-2" data-mock="true">
+                            <h4 class="font-medium text-gray-900" data-mock="true">Thomas Cook</h4>
+                            <p class="text-sm text-gray-600" data-mock="true">Connaught Place, New Delhi</p>
+                            <div class="flex items-center justify-between mt-2">
+                                <div class="flex items-center text-sm">
+                                    <i class="fas fa-walking text-primary-500 mr-1"></i>
+                                    <span class="text-gray-500" data-mock="true">0.3 km away</span>
+                                </div>
+                                <div class="flex items-center text-sm">
+                                    <i class="fas fa-star text-accent-500 mr-1"></i>
+                                    <span class="text-gray-700" data-mock="true">4.2</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="border-l-4 border-accent-500 pl-4 py-2" data-mock="true">
+                            <h4 class="font-medium text-gray-900" data-mock="true">UAE Exchange</h4>
+                            <p class="text-sm text-gray-600" data-mock="true">Karol Bagh, New Delhi</p>
+                            <div class="flex items-center justify-between mt-2">
+                                <div class="flex items-center text-sm">
+                                    <i class="fas fa-car text-primary-500 mr-1"></i>
+                                    <span class="text-gray-500" data-mock="true">2.1 km away</span>
+                                </div>
+                                <div class="flex items-center text-sm">
+                                    <i class="fas fa-star text-accent-500 mr-1"></i>
+                                    <span class="text-gray-700" data-mock="true">4.0</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="border-l-4 border-accent-500 pl-4 py-2" data-mock="true">
+                            <h4 class="font-medium text-gray-900" data-mock="true">Cox & Kings</h4>
+                            <p class="text-sm text-gray-600" data-mock="true">Rajouri Garden, New Delhi</p>
+                            <div class="flex items-center justify-between mt-2">
+                                <div class="flex items-center text-sm">
+                                    <i class="fas fa-car text-primary-500 mr-1"></i>
+                                    <span class="text-gray-500" data-mock="true">3.5 km away</span>
+                                </div>
+                                <div class="flex items-center text-sm">
+                                    <i class="fas fa-star text-accent-500 mr-1"></i>
+                                    <span class="text-gray-700" data-mock="true">4.1</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button class="w-full mt-4 bg-accent-500 hover:bg-accent-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors" 
+                            data-event="click:showAllExchanges" data-implementation="Should show map with all currency exchange locations">
+                        View All Exchanges
+                    </button>
+                </div>
+
+                <!-- Sightseeing Section -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <div class="flex items-center mb-6">
+                        <div class="bg-blue-100 p-3 rounded-lg mr-4">
+                            <i class="fas fa-camera text-secondary-500 text-xl"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-900">Nearby Attractions</h3>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div class="border-l-4 border-secondary-500 pl-4 py-2" data-mock="true">
+                            <h4 class="font-medium text-gray-900" data-mock="true">India Gate</h4>
+                            <p class="text-sm text-gray-600" data-mock="true">War memorial and iconic landmark</p>
+                            <div class="flex items-center justify-between mt-2">
+                                <div class="flex items-center text-sm">
+                                    <i class="fas fa-car text-primary-500 mr-1"></i>
+                                    <span class="text-gray-500" data-mock="true">1.5 km away</span>
+                                </div>
+                                <div class="flex items-center text-sm">
+                                    <i class="fas fa-star text-accent-500 mr-1"></i>
+                                    <span class="text-gray-700" data-mock="true">4.6</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="border-l-4 border-secondary-500 pl-4 py-2" data-mock="true">
+                            <h4 class="font-medium text-gray-900" data-mock="true">Red Fort</h4>
+                            <p class="text-sm text-gray-600" data-mock="true">Historic Mughal palace complex</p>
+                            <div class="flex items-center justify-between mt-2">
+                                <div class="flex items-center text-sm">
+                                    <i class="fas fa-car text-primary-500 mr-1"></i>
+                                    <span class="text-gray-500" data-mock="true">2.8 km away</span>
+                                </div>
+                                <div class="flex items-center text-sm">
+                                    <i class="fas fa-star text-accent-500 mr-1"></i>
+                                    <span class="text-gray-700" data-mock="true">4.4</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="border-l-4 border-secondary-500 pl-4 py-2" data-mock="true">
+                            <h4 class="font-medium text-gray-900" data-mock="true">Lotus Temple</h4>
+                            <p class="text-sm text-gray-600" data-mock="true">Architectural marvel and meditation center</p>
+                            <div class="flex items-center justify-between mt-2">
+                                <div class="flex items-center text-sm">
+                                    <i class="fas fa-car text-primary-500 mr-1"></i>
+                                    <span class="text-gray-500" data-mock="true">4.2 km away</span>
+                                </div>
+                                <div class="flex items-center text-sm">
+                                    <i class="fas fa-star text-accent-500 mr-1"></i>
+                                    <span class="text-gray-700" data-mock="true">4.5</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button class="w-full mt-4 bg-secondary-500 hover:bg-secondary-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors" 
+                            data-event="click:showAllAttractions" data-implementation="Should show map with all nearby attractions">
+                        View All Attractions
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- @END_COMPONENT: NearbyServices -->
+
+    <!-- @COMPONENT: TransportBooking [quick transport search interface] -->
+    <section class="py-16 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl md:text-4xl font-poppins font-bold text-gray-900 mb-4">Book Your Journey</h2>
+                <p class="text-xl text-gray-600">Find and book flights, trains, and buses across India.</p>
+            </div>
+            
+            <div class="bg-gradient-to-br from-blue-50 to-secondary-100 rounded-xl p-8 shadow-lg">
+                <div class="flex flex-wrap justify-center mb-8">
+                    <button class="bg-white hover:bg-gray-50 text-gray-800 px-6 py-3 rounded-lg mr-4 mb-4 flex items-center shadow-md transition-colors active:bg-secondary-500 active:text-white" 
+                            data-bind="activeTransportTab === 'flights'" data-event="click:setTransportTab('flights')" data-mock="true">
+                        <i class="fas fa-plane mr-2"></i>
+                        Flights
+                    </button>
+                    <button class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-3 rounded-lg mr-4 mb-4 flex items-center shadow-md transition-colors" 
+                            data-event="click:setTransportTab('trains')" data-mock="true">
+                        <i class="fas fa-train mr-2"></i>
+                        Trains
+                    </button>
+                    <button class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-3 rounded-lg mb-4 flex items-center shadow-md transition-colors" 
+                            data-event="click:setTransportTab('buses')" data-mock="true">
+                        <i class="fas fa-bus mr-2"></i>
+                        Buses
+                    </button>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">From</label>
+                        <div class="relative">
+                            <i class="fas fa-plane-departure absolute left-3 top-3 text-secondary-500"></i>
+                            <input type="text" placeholder="New Delhi" 
+                                   class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary-500 focus:border-transparent"
+                                   data-bind="fromCity" data-mock="true">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">To</label>
+                        <div class="relative">
+                            <i class="fas fa-plane-arrival absolute left-3 top-3 text-secondary-500"></i>
+                            <input type="text" placeholder="Mumbai" 
+                                   class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary-500 focus:border-transparent"
+                                   data-bind="toCity" data-mock="true">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Departure</label>
+                        <input type="date" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary-500 focus:border-transparent"
+                               data-bind="departureDate" data-mock="true">
+                    </div>
+                    <div>
+                        <button class="w-full bg-secondary-500 hover:bg-secondary-600 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center justify-center"
+                                data-event="click:searchTransport" data-implementation="Should search for available transport options">
+                            <i class="fas fa-search mr-2"></i>
+                            Search
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Quick Results Preview -->
+                <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4" data-mock="true">
+                    <div class="bg-white rounded-lg p-4 shadow-md">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-sm font-medium text-gray-600">IndiGo</span>
+                            <span class="text-lg font-bold text-secondary-500">₹4,500</span>
+                        </div>
+                        <div class="text-sm text-gray-600">
+                            <div>DEL → BOM</div>
+                            <div>2h 15m • Non-stop</div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg p-4 shadow-md">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-sm font-medium text-gray-600">SpiceJet</span>
+                            <span class="text-lg font-bold text-secondary-500">₹3,800</span>
+                        </div>
+                        <div class="text-sm text-gray-600">
+                            <div>DEL → BOM</div>
+                            <div>2h 20m • Non-stop</div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg p-4 shadow-md">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-sm font-medium text-gray-600">Air India</span>
+                            <span class="text-lg font-bold text-secondary-500">₹5,200</span>
+                        </div>
+                        <div class="text-sm text-gray-600">
+                            <div>DEL → BOM</div>
+                            <div>2h 10m • Non-stop</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- @END_COMPONENT: TransportBooking -->
+
+    <!-- @COMPONENT: Footer [links, contact, social media] -->
+    <footer class="bg-gray-900 text-white py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div class="md:col-span-2">
+                    <h3 class="text-2xl font-poppins font-bold mb-4">
+                        <i class="fas fa-map-marked-alt text-primary-500 mr-2"></i>
+                        TravelIndia
+                    </h3>
+                    <p class="text-gray-300 mb-6 max-w-lg">
+                        Your comprehensive travel companion for exploring incredible India. From destination discovery to transport booking and local services - we've got you covered.
+                    </p>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-gray-400 hover:text-primary-500 transition-colors" data-mock="true">
+                            <i class="fab fa-facebook-f text-xl"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-primary-500 transition-colors" data-mock="true">
+                            <i class="fab fa-twitter text-xl"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-primary-500 transition-colors" data-mock="true">
+                            <i class="fab fa-instagram text-xl"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-primary-500 transition-colors" data-mock="true">
+                            <i class="fab fa-youtube text-xl"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Quick Links</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#destinations" class="text-gray-300 hover:text-primary-500 transition-colors">Destinations</a></li>
+                        <li><a href="#services" class="text-gray-300 hover:text-primary-500 transition-colors">Services</a></li>
+                        <li><a href="#currency" class="text-gray-300 hover:text-primary-500 transition-colors">Currency Converter</a></li>
+                        <li><a href="#nearby" class="text-gray-300 hover:text-primary-500 transition-colors">Nearby Services</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-primary-500 transition-colors" data-mock="true">Travel Guides</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Support</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-300 hover:text-primary-500 transition-colors" data-mock="true">Help Center</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-primary-500 transition-colors" data-mock="true">Contact Us</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-primary-500 transition-colors" data-mock="true">Privacy Policy</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-primary-500 transition-colors" data-mock="true">Terms of Service</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-primary-500 transition-colors" data-mock="true">Cancellation Policy</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-800 mt-8 pt-8 text-center">
+                <p class="text-gray-400">
+                    © 2024 TravelIndia. All rights reserved. Made with ❤️ for incredible India.
+                </p>
+            </div>
+        </div>
+    </footer>
+    <!-- @END_COMPONENT: Footer -->
+
+    <!-- @COMPONENT: AuthenticationModals [login and signup forms] -->
+    <!-- Login Modal -->
+    <div class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50" data-bind="showLoginModal" data-implementation="Should show/hide based on login modal state">
+        <div class="bg-white rounded-xl p-8 max-w-md w-full mx-4">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-2xl font-poppins font-bold text-gray-900">Welcome Back</h3>
+                <button class="text-gray-500 hover:text-gray-700" data-event="click:closeLoginModal">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <form class="space-y-4" data-event="submit:handleLogin" data-implementation="Should handle user authentication">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                    <input type="email" required 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                           placeholder="your@email.com" data-bind="loginEmail" data-mock="true">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                    <input type="password" required 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                           placeholder="••••••••" data-bind="loginPassword" data-mock="true">
+                </div>
+                <button type="submit" 
+                        class="w-full bg-primary-500 hover:bg-primary-600 text-white py-3 rounded-lg font-medium transition-colors">
+                    Sign In
+                </button>
+                
+                <div class="text-center">
+                    <a href="#" class="text-primary-500 hover:text-primary-600 text-sm" data-mock="true">Forgot your password?</a>
+                </div>
+                
+                <div class="text-center text-gray-600">
+                    Don't have an account? 
+                    <button type="button" class="text-primary-500 hover:text-primary-600 font-medium" 
+                            data-event="click:switchToSignup" data-mock="true">Sign up</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- @END_COMPONENT: AuthenticationModals -->
+
+    <script>
+        // TODO: Implement business logic, API calls, and state management
+        (function() {
+            // Basic navigation smooth scrolling
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            });
+
+            // Mobile menu toggle
+            const mobileMenuButton = document.querySelector('[data-event*="toggleMobileMenu"]');
+            const mobileMenu = document.querySelector('[data-bind="mobileMenuOpen"]');
+            
+            if (mobileMenuButton && mobileMenu) {
+                mobileMenuButton.addEventListener('click', function() {
+                    mobileMenu.classList.toggle('hidden');
+                });
+            }
+
+            // Currency converter demo functionality
+            const fromAmountInput = document.querySelector('[data-bind="fromAmount"]');
+            const convertedAmountDisplay = document.querySelector('[data-bind="convertedAmount"]');
+            const exchangeRateDisplay = document.querySelector('[data-bind="exchangeRate"]');
+            
+            if (fromAmountInput && convertedAmountDisplay) {
+                fromAmountInput.addEventListener('input', function() {
+                    const amount = parseFloat(this.value) || 0;
+                    const convertedAmount = amount * 82.50; // Mock exchange rate
+                    convertedAmountDisplay.textContent = `₹ ${convertedAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                });
+            }
+
+            // Transport tab switching
+            document.querySelectorAll('[data-event*="setTransportTab"]').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // Remove active state from all tabs
+                    document.querySelectorAll('[data-event*="setTransportTab"]').forEach(t => {
+                        t.classList.remove('bg-white', 'text-gray-800', 'active:bg-secondary-500', 'active:text-white');
+                        t.classList.add('bg-gray-100', 'text-gray-700');
+                    });
+                    
+                    // Add active state to clicked tab
+                    this.classList.remove('bg-gray-100', 'text-gray-700');
+                    this.classList.add('bg-white', 'text-gray-800', 'active:bg-secondary-500', 'active:text-white');
+                });
+            });
+
+            // Update last updated time for currency converter
+            const lastUpdatedElement = document.querySelector('[data-bind="lastUpdated"]');
+            if (lastUpdatedElement) {
+                const now = new Date();
+                const timeAgo = Math.floor((now - new Date(now - 2 * 60 * 1000)) / 60000);
+                lastUpdatedElement.textContent = `${timeAgo} minutes ago`;
+            }
+        })();
+    </script>
+</body>
+</html>
